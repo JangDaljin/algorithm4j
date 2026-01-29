@@ -1,4 +1,4 @@
-package daljin.knapsack.beakjoon12865;
+package daljin.knapsack.baekjoon12865;
 
 import java.io.BufferedReader;
 import java.io.IOException;
