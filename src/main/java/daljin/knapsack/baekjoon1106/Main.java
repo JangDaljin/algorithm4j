@@ -28,10 +28,9 @@ public class Main {
     int[] dp = new int[1000 * 100 + 1];
     for (int i = 1; i < dp.length; i++) {
       for (int j = 0; j < N; j++) {
-        if (i < costs[j]) {
-          continue;
+        if (i >= costs[j]) {
+          dp[i] = Math.max(dp[i - costs[j]] + humans[j], dp[i]);
         }
-        dp[i] = Math.max(dp[i - costs[j]] + humans[j], dp[i]);
       }
 
       if (dp[i] >= C) {
