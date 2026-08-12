@@ -1,65 +1,10 @@
 package daljin.programmers;
 
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.ArrayDeque;
 
 class Solution {
 
-  private static class Node {
-
-    int x;
-    int y;
-    int d;
-    int[][] g;
-
-    public Node(
-        int x,
-        int y,
-        int d,
-        int[][] g
-    ) {
-      this.x = x;
-      this.y = y;
-      this.d = d;
-      this.g = g;
-    }
-
-    public int getX() {
-      return this.x;
-    }
-
-    public void setX(int x) {
-      this.x = x;
-    }
-
-    public int getY() {
-      return this.y;
-    }
-
-    public void setY(int y) {
-      this.y = y;
-    }
-
-    public int getD() {
-      return this.d;
-    }
-
-    public void setD(int d) {
-      this.d = d;
-    }
-
-    public int[][] getG() {
-      return this.g;
-    }
-
-    public void setG(int[][] g) {
-      this.g = g;
-    }
-  }
-
-
   public final static int[][] RAILS = {
-      {0, 0, 0, 0}, // 장애물
       {0, 1, 0, 1},
       {1, 0, 1, 0},
       {1, 1, 1, 1},
@@ -69,102 +14,204 @@ class Solution {
       {0, 0, 1, 1}
   };
 
+  public final static int[][] DIRECTIONS = {
+      //{dy, dx}
+      {-1, 0},
+      {0, 1},
+      {1, 0},
+      {0, -1}
+  };
+
   public int solution(int[][] grid) {
     int n = grid.length;
     int m = grid[0].length;
 
-    Queue<Node> queue = new LinkedList<>();
-    queue.add(new Node(1, 0, 1, copyGrid(n, m, grid)));
+    int[][] visited = new int[n][m];
+    ArrayDeque<int[]> stack = new ArrayDeque<>();
 
-    while (!queue.isEmpty()) {
-      Node nextNode = queue.remove();
-      Node[] nodes = createNextNodes(n, m, nextNode);
-
-      for (Node node : nodes) {
-        queue.add(node);
-      }
-    }
-
-    int answer = 0;
-    return answer;
+    return dfs(grid, n, m, 0, 0, visited, stack);
   }
 
-  private int[][] copyGrid(int n, int m, int[][] grid) {
-    int[][] g = new int[n][m];
-
-    for (int i = 0; i < grid.length; i++) {
-      for (int j = 0; j < grid[i].lennth; j++) {
-        g[i][j] = grid[i][j];
-      }
+  private int dfs(int[][] grid, int n, int m, int x, int y, int[][] visited, ArrayDeque<int[]> stack) {
+    if (x < 0 ||
+        y < 0 ||
+        x > m - 1 ||
+        y > n - 1
+    ) {
+      return 0;
     }
 
-    return g;
-  }
+    //장애물 처리하지 않음
+    if (grid[y][x] == -1) {
+      return 0;
+    }
 
-  private Node[] createNextNodes(int n, int m, Node node) {
-    for (int i = 0; i < n; i++) {
-      for (int j = 0; j < m; j++) {
-        if (node.getG()[i][j] == 0) {
-          node.setY(i);
-          node.setX(j);
-          node.setD(node.getD() + 1);
+    //재방문 금지
+    if (visited[y][x] != 0 && grid[y][x] != 3) {
+      return 0;
+    }
 
-          int[][] g = node.getG();
+    //3번 노드 2번 이상 금지
+    if (visited[y][x] > 1 && grid[y][x] == 3) {
+      return 0;
+    }
 
-          for (int k = 0; k < RAILS.length; k++) {
-            if (
-                isPuttable(rail, j, i, n, m) &&
-                    (x != 0 && validLeft(rail, g[i][j - 1])) &&
-                    (y != 0 && validTop(rail, g[i - 1][j])) &&
-                    (x != n - 1 && validRight(rail, g[i][j + 1])) &&
-                    (y != n - 1 && validBottom(rail, g[i + 1][j]))
-            ) {
-              g[y][x] = k + 1;
+    //방문 시작
+    visited[y][x] += 1;
+
+    //완료 확인
+    if (x == m - 1 && y == n - 1) {
+      int r = 0;
+      if (evaluate(grid, visited)) {
+        r = 1;
+      }
+      if (r == 1) {
+        System.out.println(stack.stream().toArray());
+      }
+      visited[y][x] -= 1;
+      return r;
+    }
+
+    //누적치
+    int acc = 0;
+
+    //비어있는 타일일 때
+    if (grid[y][x] == 0) {
+      for (int r = 1; r <= RAILS.length; r++) {
+        grid[y][x] = r;
+        if (valid(grid, n, m, x, y, r)) {
+          int nx, ny;
+          for (int[] d : DIRECTIONS) {
+            nx = x + d[1];
+            ny = y + d[0];
+            if (!stack.isEmpty() && stack.peek()[0] == ny && stack.peek()[1] == nx) {
+              continue;
             }
+            stack.push(new int[]{y, x});
+            acc += dfs(grid, n, m, nx, ny, visited, stack);
+            stack.pop();
           }
+        }
+        grid[y][x] = 0;
+      }
+    }
 
-          return new Node[0];
+    if (grid[y][x] == 3) {
+      int dy = y - stack.peek()[0];
+      int dx = x - stack.peek()[1];
+      stack.push(new int[]{y, x});
+      acc += dfs(grid, n, m, x + dx, y + dy, visited, stack);
+      stack.pop();
+    }
+
+    //현재 타일이 이미 설치된 타일일때
+    if (grid[y][x] != 0 && grid[y][x] != 3) {
+      //다음 위치 선정
+      int nx, ny;
+      for (int[] d : DIRECTIONS) {
+        nx = x + d[1];
+        ny = y + d[0];
+        //역행 금지
+        if (!stack.isEmpty() && stack.peek()[0] == ny && stack.peek()[1] == nx) {
+          continue;
+        }
+        stack.push(new int[]{y, x});
+        acc += dfs(grid, n, m, nx, ny, visited, stack);
+        stack.pop();
+      }
+    }
+
+    visited[y][x] -= 1;
+    return acc;
+  }
+
+  private boolean evaluate(int[][] grid, int[][] visited) {
+    int acc = 0;
+    for (int i = 0; i < grid.length; i++) {
+      for (int j = 0; j < grid[i].length; j++) {
+        if (grid[i][j] == -1 || grid[i][j] == 0) {
+          continue;
+        } else if (grid[i][j] == 3) {
+          acc += 2;
+        } else {
+          acc += 1;
         }
       }
     }
 
-    //할 수 있는게 없다면 폐기대상
-    return null;
+    for (int i = 0; i < visited.length; i++) {
+      for (int j = 0; j < visited[i].length; j++) {
+        acc -= visited[i][j];
+      }
+    }
+
+    return acc == 0;
   }
 
-  private boolean isPuttable(int[] rail, int x, int y, int n, int m) {
-    if (x == 0 && rail[3] == 1) {
+
+  private int[] getTile(int tileNumber) {
+    if (tileNumber == -1) {
+      return new int[]{0, 0, 0, 0};
+    }
+
+    if (tileNumber == 0) {
+      return null;
+    }
+
+    return RAILS[tileNumber - 1];
+  }
+
+  private boolean valid(int[][] grid, int n, int m, int x, int y, int rail) {
+    int[] center = getTile(rail);
+
+    if (center[3] == 1 && x == 0) {
       return false;
     }
 
-    if (y == 0 && rail[0] == 1) {
+    if (center[0] == 1 && y == 0) {
       return false;
     }
 
-    if (x == n - 1 && rail[1] == 1) {
+    if (center[1] == 1 && x == m - 1) {
       return false;
     }
 
-    if (y == m - 1 && rail[2] == 1) {
+    if (center[2] == 1 && y == n - 1) {
+      return false;
+    }
+
+    if (x != m - 1 && !validRight(center, getTile(grid[y][x + 1]))) {
+      return false;
+    }
+
+    if (x != 0 && !validLeft(center, getTile(grid[y][x - 1]))) {
+      return false;
+    }
+
+    if (y != 0 && !validTop(center, getTile(grid[y - 1][x]))) {
+      return false;
+    }
+
+    if (y != n - 1 && !validBottom(center, getTile(grid[y + 1][x]))) {
       return false;
     }
 
     return true;
   }
 
-  private boolean validRight(int[] target, int[] right) {
-    return target != null && right != null && target[1] != 0 && right[3] != 0;
+  private boolean validRight(int[] center, int[] right) {
+    return right == null || center[1] == right[3];
   }
 
-  private boolean validLeft(int[] target, int[] left) {
-    return target != null && left != null && target[3] != 0 && left[1] != 0;
+  private boolean validLeft(int[] center, int[] left) {
+    return left == null || center[3] == left[1];
   }
 
-  private boolean validTop(int[] target, int[] top) {
-    return target != null && top != null && target[0] != 0 && top[2] != 0;
+  private boolean validTop(int[] center, int[] top) {
+    return top == null || center[0] == top[2];
   }
 
-  private boolean validDown(int[] target, int[] bottom) {
-    return target != null && bottom != null && target[2] != 0 && bottom[0] != 0;
+  private boolean validBottom(int[] center, int[] bottom) {
+    return bottom == null || center[2] == bottom[0];
   }
 }
