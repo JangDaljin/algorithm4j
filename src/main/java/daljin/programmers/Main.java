@@ -43,7 +43,7 @@ public class Main {
         2, 2, 4, 644, 1, 0
     };
 
-    for (int i = 3; i < 4; i++) {
+    for (int i = 0; i < grids.length; i++) {
       int r = solution.solution(grids[i]);
       if (r == result[i]) {
         System.out.println("#" + (i + 1) + " 번째 통과");
