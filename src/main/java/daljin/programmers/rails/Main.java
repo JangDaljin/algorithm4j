@@ -1,4 +1,4 @@
-package daljin.programmers;
+package daljin.programmers.rails;
 
 public class Main {
 

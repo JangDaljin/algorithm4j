@@ -1,4 +1,4 @@
-package daljin.programmers;
+package daljin.programmers.rails;
 
 class Solution {
 
