@@ -1,8 +1,10 @@
 package daljin.programmers.inspection;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 
 public class Solution {
@@ -99,7 +101,9 @@ public class Solution {
       }
     }
 
-    dfs(0, dist, dag, indegree, new int[panels.length], 0);
+    Map<Integer, Map<Integer, Integer>> dp = new HashMap<>();
+
+    dfs(0, dist, dag, indegree, 0, dp, 0);
 
     return answer;
   }
@@ -148,13 +152,20 @@ public class Solution {
     return cnt;
   }
 
-  private void dfs(int cur, int[][] dist, List<List<Integer>> dag, int[] indegree, int[] visited, int acc) {
+  private void dfs(int cur, int[][] dist, List<List<Integer>> dag, int[] indegree, int mask, Map<Integer, Map<Integer, Integer>> dp,
+      int acc) {
 
     List<Integer> curInds = new ArrayList<>();
     for (int i = 0; i < indegree.length; i++) {
-      if (indegree[i] == 0 && visited[i] == 0) {
-        curInds.add(i);
+      if (indegree[i] != 0) {
+        continue;
       }
+
+      if ((mask & (1 << i)) != 0) {
+        continue;
+      }
+
+      curInds.add(i);
     }
 
     if (curInds.isEmpty()) {
@@ -162,18 +173,31 @@ public class Solution {
     }
 
     for (int curInd : curInds) {
-      List<Integer> nexts = dag.get(curInd);
 
-      visited[curInd]++;
+      int nMask = mask | (1 << curInd);
+      int nAcc = acc + dist[cur][curInd];
+      if (dp.get(curInd) == null) {
+        dp.put(curInd, new HashMap<>());
+        dp.get(curInd).put(nMask, nAcc);
+      } else if (dp.get(curInd).get(nMask) == null) {
+        dp.get(curInd).put(nMask, nAcc);
+      } else {
+        if (nAcc - dp.get(curInd).get(nMask) >= 0) {
+          continue;
+        }
+        dp.get(curInd).put(nMask, nAcc);
+      }
+
+      List<Integer> nexts = dag.get(curInd);
       for (int n : nexts) {
         indegree[n]--;
       }
 
-      dfs(curInd, dist, dag, indegree, visited, acc + dist[cur][curInd]);
+      dfs(curInd, dist, dag, indegree, nMask, dp, nAcc);
+
       for (int n : nexts) {
         indegree[n]++;
       }
-      visited[curInd]--;
     }
   }
 }
