@@ -29,7 +29,7 @@ public class Main {
 
       AtomicInteger called = new AtomicInteger();
 
-      sol.solution(n[i], value -> {
+      int res = sol.solution(n[i], value -> {
         int v = value;
         int[] vs = splitInteger(v);
 
@@ -52,7 +52,7 @@ public class Main {
         return st + "S" + " " + ba + "B";
       });
 
-      if (called.get() <= n[i]) {
+      if (called.get() <= n[i] && r == res) {
         System.out.println("#" + (i + 1) + " Success [" + called + "/" + n[i] + "]");
       } else {
         System.out.println("#" + (i + 1) + " Fail [" + called + "/" + n[i] + "]");
