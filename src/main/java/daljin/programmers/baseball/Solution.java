@@ -16,7 +16,7 @@ class Solution {
 
     if (sb1[0] + sb1[1] != 4) {
       for (int c : candidates) {
-        
+
       }
 
       int[] sb2 = transform(submit.apply(5678));
