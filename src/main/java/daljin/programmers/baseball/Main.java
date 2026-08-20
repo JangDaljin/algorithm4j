@@ -55,7 +55,7 @@ public class Main {
       if (called.get() <= n[i] && r == res) {
         System.out.println("#" + (i + 1) + " Success [" + called + "/" + n[i] + "]");
       } else {
-        System.out.println("#" + (i + 1) + " Fail [" + called + "/" + n[i] + "]");
+        System.out.println("#" + (i + 1) + " Fail [target: " + res + " result: " + r + "][" + called + "/" + n[i] + "]");
       }
     }
   }

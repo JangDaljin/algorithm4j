@@ -1,6 +1,5 @@
 package daljin.programmers.baseball;
 
-import java.sql.Array;
 import java.util.*;
 import java.util.function.*;
 
@@ -8,67 +7,74 @@ class Solution {
 
   public int solution(int n, Function<Integer, String> submit) {
 
-    int[] values = new int[4];
-    int idx = 0;
-    //모든 숫자 동일하게 확인
+    Set<Integer> nums = new TreeSet<>();
     for (int i = 1; i < 10; i++) {
-      String round = submit.apply(fill(i));
-      int[] sb = extract(round);
-      int s = sb[0];
-      int b = sb[1];
-
-      if (s + b == 4) {
-        values[idx++] = i;
-      }
-      //미리 채워졌으면 종료
-      if (idx == 4) {
-        break;
-      }
+      nums.add(i);
     }
-    if (idx != 4) {
-      for (int i = 0; i < 4 - idx; i++) {
-        values[idx++] = 0;
+    Set<Integer> candidates = getCandidates(nums, new HashSet<>(), new ArrayList<>(), 0);
+    int[] sb1 = transform(submit.apply(1234));
+
+    if (sb1[0] + sb1[1] != 4) {
+      for (int c : candidates) {
+        
+      }
+
+      int[] sb2 = transform(submit.apply(5678));
+      if (sb1[0] + sb1[1] + sb2[0] + sb2[1] != 4) {
+        return 0;
       }
     }
-
-    int[] selected = new int[4];
-    for (int i = 0; i < 4; i++) {
-      selected[i] = -1;
-    }
-    boolean[] used = new boolean[4];
-
-    List<Integer> list = new ArrayList<>();
-    selected[0] = 1;
-    used[0] = true;
-
-    getConfusion(values, used, selected, 0, list);
 
     return 0;
   }
 
-  private void getConfusion(int[] values, boolean[] used, int[] selected, int depth, List<Integer> acc) {
 
-    if (values.length == depth) {
-      acc.add(getValue(selected));
-      return;
+  private int[] round(int v1, int v2) {
+    int[] vs1 = getValues(v1);
+    int[] vs2 = getValues(v2);
+
+    int strike = 0;
+    int ball = 0;
+
+    for (int i = 0; i < 4; i++) {
+      for (int j = 0; j < 4; j++) {
+        if (i == j) {
+          if (vs1[i] == vs2[j]) {
+            strike++;
+          }
+        } else {
+          if (vs1[i] == vs2[j]) {
+            ball++;
+          }
+        }
+      }
     }
 
-    if (selected[depth] != -1) {
-      getConfusion(values, used, selected, depth + 1, acc);
-      return;
+    return new int[]{strike, ball};
+  }
+
+
+  private Set<Integer> getCandidates(Set<Integer> nums, Set<Integer> used, List<Integer> selected, int depth) {
+    if (depth == 4) {
+      Set<Integer> set = new TreeSet<>();
+      set.add(getValue(selected));
+      return set;
     }
 
-    for (int i = 0; i < values.length; i++) {
-      if (used[i]) {
+    Set<Integer> acc = new TreeSet<>();
+    for (int num : nums) {
+      if (used.contains(num)) {
         continue;
       }
 
-      selected[depth] = values[i];
-      used[i] = true;
-      getConfusion(values, used, selected, depth + 1, acc);
-      used[i] = false;
-      selected[depth] = -1;
+      used.add(num);
+      selected.add(num);
+      acc.addAll(getCandidates(nums, used, selected, depth + 1));
+      selected.remove(selected.size() - 1);
+      used.remove(num);
     }
+
+    return acc;
   }
 
   public int fill(int v) {
@@ -86,6 +92,13 @@ class Solution {
         values[3];
   }
 
+  public int getValue(List<Integer> list) {
+    return list.get(0) * 1000 +
+        list.get(1) * 100 +
+        list.get(2) * 10 +
+        list.get(3);
+  }
+
   public int[] getValues(int value) {
     int v = value;
     int[] values = new int[4];
@@ -96,13 +109,7 @@ class Solution {
     return values;
   }
 
-  public void swap(List<Integer> t, int i, int j) {
-    int temp = t.get(i);
-    t.set(i, t.get(j));
-    t.set(j, temp);
-  }
-
-  public int[] extract(String round) {
+  public int[] transform(String round) {
     int[] arr = new int[2];
     String[] sp = round.split(" ");
     arr[0] = Integer.parseInt(sp[0].substring(0, sp[0].length() - 1));
