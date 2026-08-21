@@ -22,7 +22,7 @@ public class Main {
 
     Solution sol = new Solution();
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 2; i < 3; i++) {
       int r = result[i];
 
       int[] rs = splitInteger(r);

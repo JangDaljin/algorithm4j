@@ -2,30 +2,72 @@ package daljin.programmers.baseball;
 
 import java.util.*;
 import java.util.function.*;
+import java.util.stream.Collectors;
 
 class Solution {
 
   public int solution(int n, Function<Integer, String> submit) {
 
+    //9자리수 모든 수 생성
     Set<Integer> nums = new TreeSet<>();
     for (int i = 1; i < 10; i++) {
       nums.add(i);
     }
     Set<Integer> candidates = getCandidates(nums, new HashSet<>(), new ArrayList<>(), 0);
+
+    //1234제출
     int[] sb1 = transform(submit.apply(1234));
-
     if (sb1[0] + sb1[1] != 4) {
-      for (int c : candidates) {
+      candidates = candidates.stream().filter(it -> {
+            int[] sb2 = round(1234, it);
+            return sb1[0] == sb2[0] && sb1[1] == sb2[1];
+          })
+          .collect(Collectors.toCollection(
+              TreeSet::new));
 
+      //5678제출
+      int[] sb2 = transform(submit.apply(5678));
+      candidates = candidates.stream().filter(it -> {
+        int[] sb3 = round(5678, it);
+        return sb2[0] == sb3[0] && sb2[1] == sb3[1];
+      }).collect(Collectors.toCollection(TreeSet::new));
+
+      //9를 사용해야 하는지 여부
+      boolean need9 = sb1[0] + sb1[1] + sb2[0] + sb2[1] != 4;
+      candidates = candidates.stream().filter(it -> {
+        int c = it;
+        while (c != 0) {
+          if (c % 10 == 9) {
+            return need9;
+          }
+          c /= 10;
+        }
+        return true;
+      }).collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    int result = 0;
+    for (int c : new ArrayList<>(candidates)) {
+      if (!candidates.contains(c)) {
+        continue;
       }
 
-      int[] sb2 = transform(submit.apply(5678));
-      if (sb1[0] + sb1[1] + sb2[0] + sb2[1] != 4) {
-        return 0;
+      int[] sb = transform(submit.apply(c));
+      if (sb[0] == 4) {
+        result = c;
+        break;
+      }
+
+      candidates.remove(c);
+      for (int c2 : new ArrayList<>(candidates)) {
+        int[] sb2 = round(c, c2);
+        if (sb[0] != sb2[0] || sb[1] != sb2[1]) {
+          candidates.remove(c2);
+        }
       }
     }
 
-    return 0;
+    return result;
   }
 
 
@@ -75,21 +117,6 @@ class Solution {
     }
 
     return acc;
-  }
-
-  public int fill(int v) {
-    int r = 0;
-    for (int i = 0; i < 4; i++) {
-      r += v * (int) Math.pow(10, i);
-    }
-    return r;
-  }
-
-  public int getValue(int[] values) {
-    return values[0] * 1000 +
-        values[1] * 100 +
-        values[2] * 10 +
-        values[3];
   }
 
   public int getValue(List<Integer> list) {
