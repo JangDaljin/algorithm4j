@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 class Solution {
 
+
   public int solution(int n, Function<Integer, String> submit) {
 
     //9자리수 모든 수 생성
@@ -46,30 +47,64 @@ class Solution {
       }).collect(Collectors.toCollection(TreeSet::new));
     }
 
-    int result = 0;
-    for (int c : new ArrayList<>(candidates)) {
-      if (!candidates.contains(c)) {
-        continue;
-      }
+    return tracking(n, submit, candidates);
+  }
 
-      int[] sb = transform(submit.apply(c));
-      if (sb[0] == 4) {
-        result = c;
-        break;
-      }
+  private int tracking(int n, Function<Integer, String> submit, Set<Integer> candidates) {
+    if (n < 0) {
+      return 0;
+    }
 
-      candidates.remove(c);
-      for (int c2 : new ArrayList<>(candidates)) {
-        int[] sb2 = round(c, c2);
-        if (sb[0] != sb2[0] || sb[1] != sb2[1]) {
-          candidates.remove(c2);
+    int c = selectQuestion(candidates);
+    candidates.remove(c);
+
+    if (candidates.isEmpty()) {
+      return c;
+    }
+
+    int[] result = transform(submit.apply(c));
+    if (result[0] == 4) {
+      return c;
+    }
+
+    Set<Integer> nextCandidates = candidates.stream().filter(
+        it -> {
+          int[] sb = round(c, it);
+          return sb[0] == result[0] && sb[1] == result[1];
         }
+    ).collect(Collectors.toCollection(TreeSet::new));
+
+    return tracking(n - 1, submit, nextCandidates);
+  }
+
+  private int selectQuestion(Set<Integer> candidates) {
+    int bestQuestion = 0;
+    int minValue = Integer.MAX_VALUE;
+    List<Integer> questions = new ArrayList<>(candidates);
+    for (int c : questions) {
+      int worstValue = getWorstest(c, candidates);
+
+      if (minValue > worstValue) {
+        minValue = worstValue;
+        bestQuestion = c;
       }
     }
 
-    return result;
+    return bestQuestion;
   }
 
+  private int getWorstest(int question, Set<Integer> candidates) {
+    int maxValue = 0;
+    int[][] acc = new int[5][5];
+    for (int c : candidates) {
+      int[] sb = round(question, c);
+      acc[sb[0]][sb[1]] += 1;
+      if (acc[sb[0]][sb[1]] > maxValue) {
+        maxValue = acc[sb[0]][sb[1]];
+      }
+    }
+    return maxValue;
+  }
 
   private int[] round(int v1, int v2) {
     int[] vs1 = getValues(v1);
