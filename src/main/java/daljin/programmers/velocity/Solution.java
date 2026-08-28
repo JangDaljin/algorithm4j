@@ -115,7 +115,14 @@ public class Solution {
       //정렬
       List<Vertex> vs = new ArrayList<>();
       for (Vertex tv : vMap.values()) {
-        vs.add(map.getOrDefault(tv.getKey(), tv));
+        Vertex target = map.compute(tv.getKey(), (k, it) -> {
+          if (it == null) {
+            return tv;
+          }
+          it.limit = Math.min(it.limit, tv.limit);
+          return it;
+        });
+        vs.add(target);
       }
 
       vs.sort(Comparator.comparing((Vertex it) -> it.x).thenComparing(it -> it.y));
