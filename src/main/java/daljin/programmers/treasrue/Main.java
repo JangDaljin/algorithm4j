@@ -29,7 +29,7 @@ public class Main {
       final int cur = i;
 
       Function<Integer, Integer> excavate = col -> {
-        acc.set(acc.get() + depth[cur][col]);
+        acc.set(acc.get() + depth[cur][col - 1]);
         if (result[cur] == col) {
           return 0;
         } else if (result[cur] < col) {

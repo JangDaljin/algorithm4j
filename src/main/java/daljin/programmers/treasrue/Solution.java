@@ -1,9 +1,7 @@
 package daljin.programmers.treasrue;
 
-import java.sql.Array;
+import java.util.Arrays;
 import java.util.function.*;
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class Solution {
 
@@ -11,53 +9,68 @@ public class Solution {
   private int money;
   private Function<Integer, Integer> excavate;
 
+  private int[][] dp;
+  private int[][] choice;
+
   public int solution(int[] depth, int money, Function<Integer, Integer> excavate) {
     this.depth = depth;
     this.money = money;
     this.excavate = excavate;
 
-    List<List<Integer>> result = new ArrayList<>();
-    combinations(
-        Arrays.stream(depth)
-            .boxed()
-            .collect(Collectors.toCollection(ArrayList::new)),
-        new ArrayList<>(),
-        0, result);
+    dp = new int[depth.length][depth.length];
+    for (int[] arr : dp) {
+      Arrays.fill(arr, -1);
+    }
+    choice = new int[depth.length][depth.length];
+    for (int[] arr : choice) {
+      Arrays.fill(arr, -1);
+    }
 
-    return 0;
-  }
+    calDP(0, depth.length - 1);
 
-
-  public void combinations(List<Integer> selectable, List<Integer> accDepth, int accMoney, List<List<Integer>> result) {
-
-    int s;
-    for (int i = 0; i < selectable.size(); i++) {
-      s = selectable.get(i);
-
-      int nextAccMoney = accMoney + s;
-      if (nextAccMoney > money) {
-        continue;
+    int l = 0;
+    int r = depth.length - 1;
+    while (true) {
+      int k = choice[l][r];
+      int res = excavate.apply(k + 1);
+      switch (res) {
+        case 0: {
+          return k + 1;
+        }
+        case -1: {
+          r = k - 1;
+          break;
+        }
+        case 1: {
+          l = k + 1;
+          break;
+        }
       }
-
-      accDepth.add(s);
-
-      //현재
-      result.add(accDepth);
-
-      //오른쪽
-      List<Integer> right = new ArrayList<>();
-      for (int j = i + 1; j < selectable.size(); j++) {
-        right.add(selectable.get(j));
-      }
-      combinations(right, new ArrayList<>(accDepth), accMoney, result);
-
-      //왼쪽
-      List<Integer> left = new ArrayList<>();
-      for (int j = 0; j < i - 1; j++) {
-        left.add(selectable.get(j));
-      }
-      combinations(left, new ArrayList<>(accDepth), accMoney, result);
     }
   }
 
+  public int calDP(int l, int r) {
+    if (l > r) {
+      return 0;
+    }
+
+    if (dp[l][r] != -1) {
+      return dp[l][r];
+    }
+
+    int best = Integer.MAX_VALUE;
+    int bestK = 0;
+    for (int k = l; k < r + 1; k++) {
+      int cost = depth[k] + Math.max(calDP(l, k - 1), calDP(k + 1, r));
+
+      if (best > cost) {
+        best = cost;
+        bestK = k;
+      }
+    }
+    dp[l][r] = best;
+    choice[l][r] = bestK;
+
+    return dp[l][r];
+  }
 }
