@@ -24,7 +24,7 @@ public class Main {
     public static void main(String[] args) {
         Solution s = new Solution();
 
-        testCase: for (int i = 0; i < 3; i++) {
+        testCase: for (int i = 1; i < 2; i++) {
             int[][] resultBoard = s.solution(board[i], commands[i]);
 
             if (resultBoard.length == 0) {

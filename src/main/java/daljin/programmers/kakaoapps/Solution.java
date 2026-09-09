@@ -1,161 +1,99 @@
 package daljin.programmers.kakaoapps;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class Solution {
-  public static class Delta {
-    public int dx;
-    public int dy;
-
-    public Delta(int dx, int dy) {
-      this.dx = dx;
-      this.dy = dy;
-    }
-  }
 
   private static final int[][] DIRECTIONS = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
   private static final int X1 = 0;
   private static final int Y1 = 1;
   private static final int X2 = 2;
   private static final int Y2 = 3;
+  private static final int DX = 4;
+  private static final int DY = 5;
+  private static final int APP_ID = 6;
+
 
 
   public int[][] solution(int[][] board, int[][] commands) {
 
     int[][] apps = getApps(board);
 
-    Map<Integer, Delta> map = new TreeMap<>();
     for (int[] command : commands) {
       int appId = command[0];
       int[] direction = DIRECTIONS[command[1] - 1];
       int dx = direction[0];
       int dy = direction[1];
-      if (!map.containsKey(appId)) {
-        map.put(appId, new Delta(dx, dy));
-      } else {
-        Delta d = map.get(appId);
-        d.dx += dx;
-        d.dy += dy;
-      }
-      move(board, apps, appId, map, dx, dy);
+      move(board, apps, appId, dx, dy);
 
-      board = new int[board.length][board[0].length];
-      for (int mapAppId = 1; mapAppId <= apps.length; mapAppId++) {
-        for (int y = apps[mapAppId - 1][Y1]; y <= apps[mapAppId - 1][Y2]; y++) {
-          for (int x = apps[mapAppId - 1][X1]; x <= apps[mapAppId - 1][X2]; x++) {
-            board[y][x] = mapAppId;
-          }
+      for (int[] board1 : board) {
+        for (int x = 0; x < board1.length; x++) {
+          board1[x] = 0;
         }
       }
 
-      for (int mapAppId : map.keySet()) {
-        for (int y = apps[mapAppId - 1][Y1]; y <= apps[mapAppId - 1][Y2]; y++) {
-          for (int x = apps[mapAppId - 1][X1]; x <= apps[mapAppId - 1][X2]; x++) {
-            board[y][x] = 0;
-          }
-        }
-      }
-
-      for (int mapAppId : map.keySet()) {
-        Delta delta = map.get(mapAppId);
-        int x1 = Math.floorMod(apps[mapAppId - 1][X1] + delta.dx, board[0].length);
-        int x2 = Math.floorMod(apps[mapAppId - 1][X2] + delta.dx, board[0].length);
-        int y1 = Math.floorMod(apps[mapAppId - 1][Y1] + delta.dy, board.length);
-        int y2 = Math.floorMod(apps[mapAppId - 1][Y2] + delta.dy, board.length);
+      for (int[] app : apps) {
+        int x1 = Math.floorMod(app[X1] + app[DX], board[0].length);
+        int x2 = Math.floorMod(app[X2] + app[DX], board[0].length);
+        int y1 = Math.floorMod(app[Y1] + app[DY], board.length);
+        int y2 = Math.floorMod(app[Y2] + app[DY], board.length);
 
         for (int y = y1; y <= y2; y++) {
           for (int x = x1; x <= x2; x++) {
-            board[y][x] = mapAppId;
+            board[y][x] = app[APP_ID];
           }
         }
       }
     }
-
-
 
     return board;
   }
 
-  private void move(int[][] board, int[][] apps, int appId, Map<Integer, Delta> map, int dx,
-      int dy) {
+  private void move(int[][] board, int[][] apps, int appId, int dx, int dy) {
+    // 맵 이탈 탐지
+    int moveCurDx = 0;
+    int curX1;
+    int curX2;
+    do {
+      moveCurDx += dx;
+      curX1 = Math.floorMod(apps[appId - 1][X1] + apps[appId - 1][DX] + moveCurDx, board[0].length);
+      curX2 = Math.floorMod(apps[appId - 1][X2] + apps[appId - 1][DX] + moveCurDx, board[0].length);
+    } while (curX2 < curX1);
 
-    Delta curAppDelta = map.get(appId);
-
-    int ndx = curAppDelta.dx;
-    int curX1 = Math.floorMod(apps[appId - 1][X1] + ndx, board[0].length);
-    int curX2 = Math.floorMod(apps[appId - 1][X2] + ndx, board[0].length);
-    while (curX2 < curX1) {
-      ndx += dx;
-      curX1 = Math.floorMod(apps[appId - 1][X1] + ndx, board[0].length);
-      curX2 = Math.floorMod(apps[appId - 1][X2] + ndx, board[0].length);
-    }
-
-    int ndy = curAppDelta.dy;
-    int curY1 = Math.floorMod(apps[appId - 1][Y1] + ndy, board.length);
-    int curY2 = Math.floorMod(apps[appId - 1][Y2] + ndy, board.length);
-    while (curY2 < curY1) {
-      ndy += dy;
-      curY1 = Math.floorMod(apps[appId - 1][Y1] + ndy, board.length);
-      curY2 = Math.floorMod(apps[appId - 1][Y2] + ndy, board.length);
-    }
-
-    curAppDelta.dx = ndx;
-    curAppDelta.dy = ndy;
+    int moveCurDy = 0;
+    int curY1;
+    int curY2;
+    do {
+      moveCurDy += dy;
+      curY1 = Math.floorMod(apps[appId - 1][Y1] + apps[appId - 1][DY] + moveCurDy, board.length);
+      curY2 = Math.floorMod(apps[appId - 1][Y2] + apps[appId - 1][DY] + moveCurDy, board.length);
+    } while (curY2 < curY1);
 
 
-    List<Integer> nextApps = new ArrayList<>();
-    for (int i = 0; i < apps.length; i++) {
-      if (appId - 1 == i) {
-        continue;
-      }
+    for (int c = 0; c < Math.max(Math.abs(moveCurDx), Math.abs(moveCurDy)); c++) {
+      apps[appId - 1][DX] += dx;
+      apps[appId - 1][DY] += dy;
 
-      int nextAppDeltaDx;
-      int nextAppDeltaDy;
-      Delta nextAppDelta = map.get(i + 1);
-      if (nextAppDelta == null) {
-        nextAppDeltaDx = 0;
-        nextAppDeltaDy = 0;
-      } else {
-        nextAppDeltaDx = nextAppDelta.dx;
-        nextAppDeltaDy = nextAppDelta.dy;
-      }
+      curX1 = Math.floorMod(apps[appId - 1][X1] + apps[appId - 1][DX], board[0].length);
+      curX2 = Math.floorMod(apps[appId - 1][X2] + apps[appId - 1][DX], board[0].length);
+      curY1 = Math.floorMod(apps[appId - 1][Y1] + apps[appId - 1][DY], board.length);
+      curY2 = Math.floorMod(apps[appId - 1][Y2] + apps[appId - 1][DY], board.length);
 
-      int nextX1 = Math.floorMod(apps[i][X1] + nextAppDeltaDx, board[0].length);
-      int nextX2 = Math.floorMod(apps[i][X2] + nextAppDeltaDx, board[0].length);
-      int nextY1 = Math.floorMod(apps[i][Y1] + nextAppDeltaDy, board.length);
-      int nextY2 = Math.floorMod(apps[i][Y2] + nextAppDeltaDy, board.length);
-
-      if (((curX1 <= nextX1 && nextX1 <= curX2) && (curY1 <= nextY1 && nextY1 <= curY2))
-          || ((curX1 <= nextX1 && nextX1 <= curX2) && (curY1 <= nextY2 && nextY2 <= curY2))
-          || ((curX1 <= nextX2 && nextX2 <= curX2) && (curY1 <= nextY1 && nextY1 <= curY2))
-          || ((curX1 <= nextX2 && nextX2 <= curX2) && (curY1 <= nextY2 && nextY2 <= curY2))) {
-
-        if (ndx > 0) {
-          nextAppDeltaDx = curX2 - nextX1 + 1;
-        } else if (ndx < 0) {
-          nextAppDeltaDx = nextX2 - curX1 - 1;
-        } else if (ndy > 0) {
-          nextAppDeltaDy = curY2 - nextY1 + 1;
-        } else if (ndy < 0) {
-          nextAppDeltaDy = nextY2 - curY1 - 1;
+      for (int[] app : apps) {
+        if (app[APP_ID] == appId) {
+          continue;
         }
 
-        if (nextAppDelta == null) {
-          map.put(i + 1, new Delta(nextAppDeltaDx, nextAppDeltaDy));
-        } else {
-          nextAppDelta.dx += nextAppDeltaDx;
-          nextAppDelta.dy += nextAppDeltaDy;
+        int nextX1 = Math.floorMod(app[X1] + app[DX], board[0].length);
+        int nextX2 = Math.floorMod(app[X2] + app[DX], board[0].length);
+        int nextY1 = Math.floorMod(app[Y1] + app[DY], board.length);
+        int nextY2 = Math.floorMod(app[Y2] + app[DY], board.length);
+
+        if (curX1 <= nextX2 && nextX1 <= curX2 && curY1 <= nextY2 && nextY1 <= curY2) {
+          move(board, apps, app[APP_ID], dx, dy);
         }
-
-        nextApps.add(i + 1);
       }
-    }
-
-    for (int nextAppId : nextApps) {
-      move(board, apps, nextAppId, map, dx, dy);
     }
   }
 
@@ -197,13 +135,13 @@ public class Solution {
             }
           }
 
-          result.put(appId, new int[] {x1, y1, x2, y2});
+          result.put(appId, new int[] {x1, y1, x2, y2, 0, 0, appId});
         }
       }
     }
 
 
-    int[][] r = new int[result.size()][4];
+    int[][] r = new int[result.size()][7];
     for (int k : result.keySet()) {
       r[k - 1] = result.get(k);
     }
