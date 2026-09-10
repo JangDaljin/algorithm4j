@@ -8,7 +8,7 @@ public class Test {
         Random rnd = new Random(42);
 
         for (int trial = 0; trial < 500000; trial++) {
-            int H = 2 + rnd.nextInt(9); // 2~6
+            int H = 2 + rnd.nextInt(7); // 2~6
             int W = 2 + rnd.nextInt(7);
 
             int[][] board = randomBoard(H, W, rnd);

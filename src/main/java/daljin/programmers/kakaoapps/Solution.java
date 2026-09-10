@@ -1,8 +1,14 @@
 package daljin.programmers.kakaoapps;
 
-import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class Solution {
 
@@ -17,7 +23,6 @@ public class Solution {
 
   private int[][] apps;
   private int[][] board;
-  ArrayDeque<Integer> dq = new ArrayDeque<>();
 
   public int[][] solution(int[][] board, int[][] commands) {
     this.board = board;
@@ -29,8 +34,7 @@ public class Solution {
       int dx = direction[0];
       int dy = direction[1];
 
-      dq.add(appId);
-      move(board, apps, dx, dy);
+      move(board, apps, appId, dx, dy);
     }
 
     draw();
@@ -82,34 +86,90 @@ public class Solution {
     }
   }
 
-  private void move(int[][] board, int[][] apps, int dx, int dy) {
+  private void move(int[][] board, int[][] apps, int appId, int dx, int dy) {
+    // 그룹 찾기
+    Set<Integer> groupAppIds = getGroupAppIds(apps, appId, dx, dy);
 
-    while (!dq.isEmpty()) {
-      int appId = dq.poll();
-      int[] curApp = apps[appId - 1];
-      curApp[DX] += dx;
-      curApp[DY] += dy;
+    // 그룹 전체 이동
+    for (int groupAppId : groupAppIds) {
+      int[] app = apps[groupAppId - 1];
+      app[DX] += dx;
+      app[DY] += dy;
+    }
 
-      for (int[] nextApp : apps) {
-        if (nextApp[APP_ID] == appId) {
-          continue;
-        }
-
-        if (isConflict(curApp, nextApp)) {
-          dq.push(nextApp[APP_ID]);
-        }
-      }
-
-      // 맵 이탈 탐지
-      int curX1 = Math.floorMod(apps[appId - 1][X1] + apps[appId - 1][DX], board[0].length);
-      int curX2 = Math.floorMod(apps[appId - 1][X2] + apps[appId - 1][DX], board[0].length);
-      int curY1 = Math.floorMod(apps[appId - 1][Y1] + apps[appId - 1][DY], board.length);
-      int curY2 = Math.floorMod(apps[appId - 1][Y2] + apps[appId - 1][DY], board.length);
+    // 맵 이탈 탐지
+    int curX1;
+    int curX2;
+    int curY1;
+    int curY2;
+    Queue<Integer> overflowAppIdQueue = new LinkedList<>();
+    for (int[] app : apps) {
+      curX1 = Math.floorMod(app[X1] + app[DX], board[0].length);
+      curX2 = Math.floorMod(app[X2] + app[DX], board[0].length);
+      curY1 = Math.floorMod(app[Y1] + app[DY], board.length);
+      curY2 = Math.floorMod(app[Y2] + app[DY], board.length);
 
       if (curX1 > curX2 || curY1 > curY2) {
-        dq.add(appId);
+        overflowAppIdQueue.add(app[APP_ID]);
       }
     }
+
+    int overflowAppId;
+    int[] overflowApp;
+    while (!overflowAppIdQueue.isEmpty()) {
+      overflowAppId = overflowAppIdQueue.poll();
+      overflowApp = apps[overflowAppId - 1];
+
+      curX1 = Math.floorMod(overflowApp[X1] + overflowApp[DX], board[0].length);
+      curX2 = Math.floorMod(overflowApp[X2] + overflowApp[DX], board[0].length);
+      curY1 = Math.floorMod(overflowApp[Y1] + overflowApp[DY], board.length);
+      curY2 = Math.floorMod(overflowApp[Y2] + overflowApp[DY], board.length);
+
+      if (curX1 <= curX2 && curY1 <= curY2) {
+        continue;
+      }
+
+
+      int nextX1;
+      int nextX2;
+      int nextY1;
+      int nextY2;
+      Set<Integer> overflowGroupAppIds;
+
+      while (true) {
+        curX1 = Math.floorMod(overflowApp[X1] + overflowApp[DX], board[0].length);
+        curX2 = Math.floorMod(overflowApp[X2] + overflowApp[DX], board[0].length);
+        curY1 = Math.floorMod(overflowApp[Y1] + overflowApp[DY], board.length);
+        curY2 = Math.floorMod(overflowApp[Y2] + overflowApp[DY], board.length);
+
+        if (curX1 <= curX2 && curY1 <= curY2) {
+          break; // 풀렸으면 종료
+        }
+
+        overflowGroupAppIds = getGroupAppIds(apps, overflowAppId, dx, dy);
+
+        int[] overflowGroupApp;
+        for (int overflowGroupAppId : overflowGroupAppIds) {
+          overflowGroupApp = apps[overflowGroupAppId - 1];
+
+          overflowGroupApp[DX] += dx;
+          overflowGroupApp[DY] += dy;
+
+          nextX1 = Math.floorMod(overflowGroupApp[X1] + overflowGroupApp[DX], board[0].length);
+          nextX2 = Math.floorMod(overflowGroupApp[X2] + overflowGroupApp[DX], board[0].length);
+          nextY1 = Math.floorMod(overflowGroupApp[Y1] + overflowGroupApp[DY], board.length);
+          nextY2 = Math.floorMod(overflowGroupApp[Y2] + overflowGroupApp[DY], board.length);
+
+          if (nextX1 <= nextX2 && nextY1 <= nextY2) {
+            continue;
+          }
+
+          overflowAppIdQueue.add(overflowGroupAppId);
+        }
+      }
+    }
+
+
   }
 
   public int[][] getApps() {
@@ -163,8 +223,8 @@ public class Solution {
     return r;
   }
 
-  private java.util.List<int[]> split(int s, int e, int L) {
-    java.util.List<int[]> r = new java.util.ArrayList<>();
+  private List<int[]> split(int s, int e, int L) {
+    List<int[]> r = new ArrayList<>();
     if (s <= e)
       r.add(new int[] {s, e});
     else {
@@ -190,5 +250,45 @@ public class Solution {
     int by1 = Math.floorMod(b[Y1] + b[DY], H), by2 = Math.floorMod(b[Y2] + b[DY], H);
 
     return overlap1D(ax1, ax2, bx1, bx2, W) && overlap1D(ay1, ay2, by1, by2, H);
+  }
+
+  private Set<Integer> getGroupAppIds(int[][] apps, int startAppId, int dx, int dy) {
+    Set<Integer> groupAppIds = new TreeSet<>();
+    Queue<Integer> groupAppIdQueue = new LinkedList<>();
+
+    groupAppIds.add(startAppId);
+    groupAppIdQueue.add(startAppId);
+
+    int currentAppId;
+    int[] current;
+    while (!groupAppIdQueue.isEmpty()) {
+      currentAppId = groupAppIdQueue.poll();
+
+      current = apps[currentAppId - 1];
+
+      int nextAppId;
+      for (int[] next : apps) {
+        nextAppId = next[APP_ID];
+        if (nextAppId == currentAppId) {
+          continue;
+        }
+
+        if (groupAppIds.contains(nextAppId)) {
+          continue;
+        }
+
+        int[] copyCurrent = Arrays.copyOf(current, current.length);
+        int[] copyNext = Arrays.copyOf(next, next.length);
+        copyCurrent[DX] += dx;
+        copyCurrent[DY] += dy;
+
+        if (isConflict(copyCurrent, copyNext)) {
+          groupAppIds.add(nextAppId);
+          groupAppIdQueue.add(nextAppId);
+        }
+      }
+    }
+
+    return groupAppIds;
   }
 }
