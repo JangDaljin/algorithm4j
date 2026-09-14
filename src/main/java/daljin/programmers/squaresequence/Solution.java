@@ -9,8 +9,6 @@ class Solution {
     private static final int COUNT = 0;
     private static final int ACC = 1;
 
-    private int[] dpCount;
-
     public long[] solution(int[] arr, long l, long r) {
 
 
@@ -39,33 +37,44 @@ class Solution {
             }
         }
 
-        long acc = 0;
-        long remain = K;
-        for (long[] row : table) {
-        
-            long dv = (long) Math.floor(remain / row[VALUE]);
-            long dd = K % row[VALUE];
 
-            //현재 위치에서 종료된 경우
-            if(dd == 0 && dv <= row[VALUE]) {
-                acc += 1;
-                continue;
+        // 초기 확인
+        long LEN = r - l + 1;
+        int li = 0;
+        int ri = 0;
+        long lli = 0;
+        long rri = 0;
+        long curAcc = 0;
+        for (int i = 0; i < table.length; i++) {
+            if (table[i][TO] >= (LEN - 1)) {
+                ri = i;
+                rri = (LEN - 1) - table[i][FROM];
+                curAcc += table[i][VALUE] * ((LEN - 1) - table[i][FROM] + 1);
+                break;
             }
 
-            //모두 사용하지 않았는데도 나머지가 남는 경우
-            if(dd != 0 && dv < row[VALUE]) {
-                continue;
-            }
-            
-
-
-            
+            curAcc += table[i][VALUE] * (table[i][TO] - table[i][FROM] + 1);
+            ri += 1;
         }
-        
+
+        long C = 0;
+        // 계산
+        while (ri >= table.length) {
+            if(curAcc == K) {
+                C++;
+            }
+
+            long moveIndex = Math.min(table[li][TO], table[ri][TO]);
+
+            for(int i = 0 ; i <)
+
+            ri++;
+            li++;
+        }
+
+
 
         long[] answer = {K, 0};
         return answer;
     }
-
-    private void dp(int[][] table, )
 }
